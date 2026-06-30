@@ -1,0 +1,27 @@
+import { createServer } from "http";
+import express from "express";
+import cors from "cors";
+import { Server } from "colyseus";
+import { WebSocketTransport } from "@colyseus/ws-transport";
+import { monitor } from "@colyseus/monitor";
+import { GameRoom } from "./rooms/GameRoom";
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const server = createServer(app);
+const gameServer = new Server({
+  transport: new WebSocketTransport({
+    server,
+  }),
+});
+
+gameServer.define("game", GameRoom);
+app.use("/colyseus", monitor());
+
+const PORT = Number(process.env.PORT) || 2567;
+
+server.listen(PORT, () => {
+  console.log(`Colyseus server listening on ws://localhost:${PORT}`);
+});
