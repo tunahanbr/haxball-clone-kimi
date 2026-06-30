@@ -15,11 +15,24 @@ app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 const server = (0, http_1.createServer)(app);
 const gameServer = new colyseus_1.Server({
-    transport: new ws_transport_1.WebSocketTransport({
-        server,
-    }),
+    transport: new ws_transport_1.WebSocketTransport({ server }),
 });
 gameServer.define("game", GameRoom_1.GameRoom);
+app.get("/api/room/:code", async (req, res) => {
+    try {
+        const code = req.params.code.toUpperCase();
+        const rooms = await colyseus_1.matchMaker.query({ name: "game" });
+        const target = rooms.find((r) => r.metadata?.code === code);
+        if (!target) {
+            res.status(404).json({ error: "Room not found" });
+            return;
+        }
+        res.json({ roomId: target.roomId });
+    }
+    catch {
+        res.status(500).json({ error: "Internal error" });
+    }
+});
 app.use("/colyseus", (0, monitor_1.monitor)());
 const PORT = Number(process.env.PORT) || 2567;
 server.listen(PORT, () => {
